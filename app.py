@@ -10,7 +10,7 @@ from google.genai import types
 
 # Se aparecer erro de "modelo nao encontrado", troque este nome
 # por um modelo Flash atual em aistudio.google.com
-MODELO = "gemini-2.5-flash"
+MODELO = "gemini-3.8-flash"
 REDES = ["TikTok", "Kwai", "YouTube Shorts", "Instagram Reels"]
 
 PROMPT = """Você é um especialista em vídeos curtos (TikTok, Kwai, YouTube Shorts, Instagram Reels).
