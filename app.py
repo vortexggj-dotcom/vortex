@@ -157,4 +157,4 @@ if r:
             lista("Chamadas para ação", d.get("chamadas_para_acao"))
             lista("Sugestões de capa", d.get("sugestoes_capa"))
             if rede == "Kwai":
-                st.info("Kwai: sem API pública de publicação
+                st.info("Kwai: sem API pública de publicação end
