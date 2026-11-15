@@ -1,3 +1,4 @@
+
 import json
 import os
 import tempfile
@@ -7,7 +8,7 @@ import streamlit as st
 from google import genai
 from google.genai import types
 
-# Se aparecer erro de "modelo não encontrado", troque este nome
+# Se aparecer erro de "modelo nao encontrado", troque este nome
 # por um modelo Flash atual em aistudio.google.com
 MODELO = "gemini-2.5-flash"
 REDES = ["TikTok", "Kwai", "YouTube Shorts", "Instagram Reels"]
@@ -97,36 +98,42 @@ def lista(titulo, itens):
             st.markdown(f"- {i}")
 
 
-st.set_page_config(page_title="Vortex", page_icon="🌀")
-st.title("🌀 Vortex")
-st.caption("Analise seu vídeo e prepare a publicação. A nota é uma estimativa, não uma garantia.")
+def mostrar_rede(rede, d):
+    st.markdown(f"**Duração ideal:** {d.get('duracao_ideal', '-')}")
+    st.markdown(f"**Melhor horário (geral):** {d.get('melhor_horario', '-')}")
+    st.markdown("**Títulos**")
+    for t in d.get("titulos", []):
+        st.code(t, language=None, wrap_lines=True)
+    st.markdown("**Descrições**")
+    for t in d.get("descricoes", []):
+        st.code(t, language=None, wrap_lines=True)
+    st.markdown("**Hashtags**")
+    st.code(" ".join(d.get("hashtags", [])), language=None, wrap_lines=True)
+    st.markdown("**Palavras-chave**")
+    st.code(", ".join(d.get("palavras_chave", [])), language=None, wrap_lines=True)
+    lista("Chamadas para ação", d.get("chamadas_para_acao"))
+    lista("Sugestões de capa", d.get("sugestoes_capa"))
+    if rede == "Kwai":
+        aviso = "Kwai: sem API pública de publicação que eu conheça. "
+        aviso += "Use os textos acima e poste manualmente."
+        st.info(aviso)
 
-arquivo = st.file_uploader("ENVIAR VÍDEO", type=["mp4", "mov", "webm", "mkv"])
-if arquivo:
-    st.video(arquivo)
 
-if st.button("ANALISAR VÍDEO", type="primary", disabled=arquivo is None):
-   with try: st.spinner("Analisando... pode levar de 1 a 3 minutos."):
-        
- except Exception as: e st.session_state["r"] = analisar(arquivo)
-        
-            st.session_state.pop("r", None)
-            st.error(f"Erro: {e}")
-
-r = st.session_state.get("r")
-if r:
+def mostrar_resultado(r):
     nota = int(r.get("nota", 0))
     st.divider()
     c1, c2 = st.columns(2)
     c1.metric("Nota de viralização", f"{nota}/100")
     c2.metric("Classificação", classificar(nota))
     st.progress(min(max(nota, 0), 100) / 100)
-    st.write(f"**Probabilidade estimada de bom desempenho:** {r.get('probabilidade_bom_desempenho', '-')}")
+    prob = r.get("probabilidade_bom_desempenho", "-")
+    st.write(f"**Probabilidade estimada de bom desempenho:** {prob}")
     st.write(r.get("resumo", ""))
 
     with st.expander("Relatório completo", expanded=True):
         for k, v in r.get("analise", {}).items():
-            st.markdown(f"**{k.replace('_', ' ').capitalize()}:** {v}")
+            nome = k.replace("_", " ").capitalize()
+            st.markdown(f"**{nome}:** {v}")
         lista("✅ Pontos positivos", r.get("pontos_positivos"))
         lista("⚠️ Pontos negativos", r.get("pontos_negativos"))
         lista("📉 Por que pode flopar", r.get("motivos_flop"))
@@ -141,20 +148,33 @@ if r:
     abas = st.tabs(REDES)
     for aba, rede in zip(abas, REDES):
         with aba:
-            d = r.get("redes", {}).get(rede, {})
-            st.markdown(f"**Duração ideal:** {d.get('duracao_ideal', '-')}")
-            st.markdown(f"**Melhor horário (geral):** {d.get('melhor_horario', '-')}")
-            st.markdown("**Títulos**")
-            for t in d.get("titulos", []):
-                st.code(t, language=None, wrap_lines=True)
-            st.markdown("**Descrições**")
-            for t in d.get("descricoes", []):
-                st.code(t, language=None, wrap_lines=True)
-            st.markdown("**Hashtags**")
-            st.code(" ".join(d.get("hashtags", [])), language=None, wrap_lines=True)
-            st.markdown("**Palavras-chave**")
-            st.code(", ".join(d.get("palavras_chave", [])), language=None, wrap_lines=True)
-            lista("Chamadas para ação", d.get("chamadas_para_acao"))
-            lista("Sugestões de capa", d.get("sugestoes_capa"))
-            if rede == "Kwai":
-                st.info("Kwai: sem API pública de publicação end
+            mostrar_rede(rede, r.get("redes", {}).get(rede, {}))
+
+
+def principal():
+    st.set_page_config(page_title="Vortex", page_icon="🌀")
+    st.title("🌀 Vortex")
+    st.caption(
+        "Analise seu vídeo e prepare a publicação. "
+        "A nota é uma estimativa, não uma garantia."
+    )
+
+    arquivo = st.file_uploader("ENVIAR VÍDEO", type=["mp4", "mov", "webm", "mkv"])
+    if arquivo:
+        st.video(arquivo)
+
+    clicou = st.button("ANALISAR VÍDEO", type="primary", disabled=arquivo is None)
+    if clicou:
+        with st.spinner("Analisando... pode levar de 1 a 3 minutos."):
+            try:
+                st.session_state["r"] = analisar(arquivo)
+            except Exception as e:
+                st.session_state.pop("r", None)
+                st.error(f"Erro: {e}")
+
+    r = st.session_state.get("r")
+    if r:
+        mostrar_resultado(r)
+
+
+principal()
