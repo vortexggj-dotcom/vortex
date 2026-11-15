@@ -92,7 +92,7 @@ def analisar(arquivo):
 
 def lista(titulo, itens):
     if itens:
-        st.markdown(f"*{titulo}*")
+        st.markdown(f"**{titulo}**")
         for i in itens:
             st.markdown(f"- {i}")
 
@@ -108,4 +108,53 @@ if arquivo:
 if st.button("ANALISAR VÍDEO", type="primary", disabled=arquivo is None):
     with st.spinner("Analisando... pode levar de 1 a 3 minutos."):
         try:
-            st.session_state["r…
+            st.session_state["r"] = analisar(arquivo)
+        except Exception as e:
+            st.session_state.pop("r", None)
+            st.error(f"Erro: {e}")
+
+r = st.session_state.get("r")
+if r:
+    nota = int(r.get("nota", 0))
+    st.divider()
+    c1, c2 = st.columns(2)
+    c1.metric("Nota de viralização", f"{nota}/100")
+    c2.metric("Classificação", classificar(nota))
+    st.progress(min(max(nota, 0), 100) / 100)
+    st.write(f"**Probabilidade estimada de bom desempenho:** {r.get('probabilidade_bom_desempenho', '-')}")
+    st.write(r.get("resumo", ""))
+
+    with st.expander("Relatório completo", expanded=True):
+        for k, v in r.get("analise", {}).items():
+            st.markdown(f"**{k.replace('_', ' ').capitalize()}:** {v}")
+        lista("✅ Pontos positivos", r.get("pontos_positivos"))
+        lista("⚠️ Pontos negativos", r.get("pontos_negativos"))
+        lista("📉 Por que pode flopar", r.get("motivos_flop"))
+        lista("🔧 O que corrigir", r.get("correcoes"))
+        lista("⏱️ Como melhorar a retenção", r.get("sugestoes_retencao"))
+        lista("✂️ Sugestões de edição", r.get("sugestoes_edicao"))
+        if r.get("gancho_sugerido"):
+            st.markdown("**🎣 Gancho sugerido**")
+            st.code(r["gancho_sugerido"], language=None)
+
+    st.subheader("Conteúdo por plataforma")
+    abas = st.tabs(REDES)
+    for aba, rede in zip(abas, REDES):
+        with aba:
+            d = r.get("redes", {}).get(rede, {})
+            st.markdown(f"**Duração ideal:** {d.get('duracao_ideal', '-')}")
+            st.markdown(f"**Melhor horário (geral):** {d.get('melhor_horario', '-')}")
+            st.markdown("**Títulos**")
+            for t in d.get("titulos", []):
+                st.code(t, language=None, wrap_lines=True)
+            st.markdown("**Descrições**")
+            for t in d.get("descricoes", []):
+                st.code(t, language=None, wrap_lines=True)
+            st.markdown("**Hashtags**")
+            st.code(" ".join(d.get("hashtags", [])), language=None, wrap_lines=True)
+            st.markdown("**Palavras-chave**")
+            st.code(", ".join(d.get("palavras_chave", [])), language=None, wrap_lines=True)
+            lista("Chamadas para ação", d.get("chamadas_para_acao"))
+            lista("Sugestões de capa", d.get("sugestoes_capa"))
+            if rede == "Kwai":
+                st.info("Kwai: sem API pública de publicação
