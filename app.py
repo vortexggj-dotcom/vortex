@@ -106,10 +106,10 @@ if arquivo:
     st.video(arquivo)
 
 if st.button("ANALISAR VÍDEO", type="primary", disabled=arquivo is None):
-    with st.spinner("Analisando... pode levar de 1 a 3 minutos."):
-        try:
-            st.session_state["r"] = analisar(arquivo)
-        except Exception as e:
+  try:  with st.spinner("Analisando... pode levar de 1 a 3 minutos."):
+        
+ except Exception as: e st.session_state["r"] = analisar(arquivo)
+        
             st.session_state.pop("r", None)
             st.error(f"Erro: {e}")
 
